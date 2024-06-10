@@ -1,144 +1,196 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
+import { User } from './entities/user.entity';
+import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-
-jest.mock('./users.service');
+import * as request from 'supertest';
+import { INestApplication } from '@nestjs/common';
+import { join } from 'path';
 
 describe('UsersController', () => {
-  let controller: UsersController;
-  let service: UsersService;
+  let app: INestApplication;
+  let repository: Repository<User>;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        TypeOrmModule.forRoot({
+          type: 'sqlite',
+          database: ':memory:',
+          entities: [User],
+          synchronize: true,
+        }),
+        TypeOrmModule.forFeature([User])
+      ],
       controllers: [UsersController],
       providers: [UsersService],
     }).compile();
 
-    controller = module.get<UsersController>(UsersController);
-    service = module.get<UsersService>(UsersService);
+    app = module.createNestApplication();
+    await app.init();
+
+    repository = module.get<Repository<User>>(getRepositoryToken(User));
+  });
+
+  afterEach(async () => {
+    await repository.query(`DELETE FROM user`);
+  });
+
+  afterAll(async () => {
+    await app.close();
   });
 
   describe('create', () => {
     it('should create a user when passed valid input', async () => {
       const createUserDto: CreateUserDto = {
-        firstName: 'n1',
-        lastName: 'n2',
-        // isActive: false
+        firstName: 'John',
+        lastName: 'Doe',
       };
-      const result = { id: 1, ...createUserDto };
 
-      jest.spyOn(service, 'create').mockResolvedValue(result as never);
+      const response = await request(app.getHttpServer())
+        .post('/users')
+        .send(createUserDto)
+        .expect(201);
 
-      expect(await controller.create(createUserDto)).toBe(result);
+      expect(response.body).toHaveProperty('id');
+      expect(response.body.firstName).toBe(createUserDto.firstName);
     });
 
     it('should throw an error if the input is invalid', async () => {
       const createUserDto: CreateUserDto = {
-        firstName: '',
+        firstName: undefined,
         lastName: '',
-        // isActive: false
       };
 
-      jest
-        .spyOn(service, 'create')
-        .mockRejectedValue(new Error('Invalid input') as never);
+      const response = await request(app.getHttpServer())
+        .post('/users')
+        .send(createUserDto)
+        .expect(500);
 
-      await expect(controller.create(createUserDto)).rejects.toThrow(
-        'Invalid input',
-      );
+      expect(response.body.message).toBe('Internal server error');
     });
   });
 
   describe('findAll', () => {
     it('should return all users', async () => {
-      const result = [
-        { id: 1, firstName: 'n1', lastName: 'n2', isActive: true },
-      ];
+      const user: CreateUserDto = {
+        firstName: 'John',
+        lastName: 'Doe',
+      };
+      await repository.save(user);
 
-      jest.spyOn(service, 'findAll').mockResolvedValue(result as never);
+      const response = await request(app.getHttpServer())
+        .get('/users')
+        .expect(200);
 
-      expect(await controller.findAll()).toBe(result);
+      expect(response.body).toBeInstanceOf(Array);
+      expect(response.body).toHaveLength(1);
     });
 
     it('should return an empty array if no users are found', async () => {
-      const result = [];
+      const response = await request(app.getHttpServer())
+        .get('/users')
+        .expect(200);
 
-      jest.spyOn(service, 'findAll').mockResolvedValue(result as never);
-
-      expect(await controller.findAll()).toBe(result);
+      expect(response.body).toBeInstanceOf(Array);
+      expect(response.body).toHaveLength(0);
     });
   });
 
   describe('findOne', () => {
     it('should return a user when passed a valid ID', async () => {
-      const result = { id: 1, firstName: 'n1', lastName: 'n2', isActive: true };
+      const createUserDto: CreateUserDto = {
+        firstName: 'John',
+        lastName: 'Doe',
+      };
+      const user = await repository.save(createUserDto);
 
-      jest.spyOn(service, 'findOne').mockResolvedValue(result as never);
+      const response = await request(app.getHttpServer())
+        .get(`/users/${user.id}`)
+        .expect(200);
 
-      expect(await controller.findOne('1')).toBe(result);
+      expect(response.body).toHaveProperty('id', user.id);
     });
 
-    it('should throw an error if the user is not found', async () => {
-      jest
-        .spyOn(service, 'findOne')
-        .mockRejectedValue(new Error('User not found') as never);
+    it('should not throw an error if the user is not found', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/users/999')
+        .expect(200);
 
-      await expect(controller.findOne('1')).rejects.toThrow('User not found');
+      expect(response.body).toEqual({});
     });
   });
 
   describe('update', () => {
     it('should update a user when passed a valid ID and valid input', async () => {
-      const updateUserDto: UpdateUserDto = { firstName: 'n2' };
-      const result = { id: 1, ...updateUserDto };
+      const createUserDto: CreateUserDto = {
+        firstName: 'John',
+        lastName: 'Doe',
+      };
+      const user = await repository.save(createUserDto);
+      const updateUserDto: UpdateUserDto = { firstName: 'Jane' };
 
-      jest.spyOn(service, 'update').mockResolvedValue(result as never);
+      const response = await request(app.getHttpServer())
+        .patch(`/users/${user.id}`)
+        .send(updateUserDto)
+        .expect(200);
 
-      expect(await controller.update('1', updateUserDto)).toBe(result);
+      expect(response.body).toHaveProperty('affected', 1);
+
+      const updatedUser = await repository.findOneBy({ id: user.id });
+      expect(updatedUser.firstName).toBe(updateUserDto.firstName);
     });
 
-    it('should throw an error if the user is not found', async () => {
-      const updateUserDto: UpdateUserDto = { firstName: 'n2' };
+    it('should not throw an error if the user is not found', async () => {
+      const updateUserDto: UpdateUserDto = { firstName: 'Jane Doe' };
 
-      jest
-        .spyOn(service, 'update')
-        .mockRejectedValue(new Error('User not found') as never);
+      const response = await request(app.getHttpServer())
+        .patch('/users/999')
+        .send(updateUserDto)
+        .expect(200);
 
-      await expect(controller.update('1', updateUserDto)).rejects.toThrow(
-        'User not found',
-      );
-    });
-
-    it('should throw an error if the input is invalid', async () => {
-      const updateUserDto: UpdateUserDto = { firstName: '' };
-
-      jest
-        .spyOn(service, 'update')
-        .mockRejectedValue(new Error('Invalid input') as never);
-
-      await expect(controller.update('1', updateUserDto)).rejects.toThrow(
-        'Invalid input',
-      );
+      expect(response.body).toHaveProperty('affected', 0);
     });
   });
 
   describe('remove', () => {
     it('should remove a user when passed a valid ID', async () => {
-      const result = { id: 1, firstName: 'n2' };
+      const createUserDto: CreateUserDto = {
+        firstName: 'John',
+        lastName: 'Doe',
+      };
 
-      jest.spyOn(service, 'remove').mockResolvedValue(result as never);
+      const user = await repository.save(createUserDto);
 
-      expect(await controller.remove('1')).toBe(result);
+      const response = await request(app.getHttpServer())
+        .delete(`/users/${user.id}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('affected', 1);
+
+      const removedUser = await repository.findOneBy({ id: user.id });
+      expect(removedUser).toBeNull();
     });
 
-    it('should throw an error if the user is not found', async () => {
-      jest
-        .spyOn(service, 'remove')
-        .mockRejectedValue(new Error('User not found') as never);
+    it('should not throw an error if the user is not found', async () => {
+      const response = await request(app.getHttpServer())
+        .delete('/users/999')
+        .expect(200);
 
-      await expect(controller.remove('1')).rejects.toThrow('User not found');
+      expect(response.body).toHaveProperty('affected', 0);
+    });
+  });
+
+  describe('import', () => {
+    it('should import users from external file', async () => {
+      const filePath = join(__dirname, '..', '..', 'test', 'data', 'users.json');
+      await request(app.getHttpServer())
+        .post('/users/import')
+        .attach('file', filePath)
+        .expect(201);
     });
   });
 });

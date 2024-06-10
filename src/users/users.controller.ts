@@ -43,9 +43,9 @@ export class UsersController {
     return this.usersService.remove(+id);
   }
 
-  @Post('parse')
+  @Post('import')
   @UseInterceptors(FileInterceptor('file'))
-  uploadFile(@UploadedFile() file: Express.Multer.File) {
-    console.log(file);
+  import(@UploadedFile() file: Express.Multer.File) {
+    console.log(JSON.parse(file.buffer?.toString() ?? '{}'));
   }
 }
