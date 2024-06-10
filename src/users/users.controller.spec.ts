@@ -23,8 +23,9 @@ describe('UsersController', () => {
   describe('create', () => {
     it('should create a user when passed valid input', async () => {
       const createUserDto: CreateUserDto = {
-        name: 'John Doe',
-        address: '',
+        firstName: 'n1',
+        lastName: 'n2',
+        // isActive: false
       };
       const result = { id: 1, ...createUserDto };
 
@@ -35,8 +36,9 @@ describe('UsersController', () => {
 
     it('should throw an error if the input is invalid', async () => {
       const createUserDto: CreateUserDto = {
-        name: '',
-        address: '',
+        firstName: '',
+        lastName: '',
+        // isActive: false
       };
 
       jest
@@ -51,7 +53,7 @@ describe('UsersController', () => {
 
   describe('findAll', () => {
     it('should return all users', async () => {
-      const result = [{ id: 1, name: 'John Doe' }];
+      const result = [{ id: 1, firstName: 'n1', lastName: 'n2', isActive: true }];
 
       jest.spyOn(service, 'findAll').mockResolvedValue(result as never);
 
@@ -69,7 +71,7 @@ describe('UsersController', () => {
 
   describe('findOne', () => {
     it('should return a user when passed a valid ID', async () => {
-      const result = { id: 1, name: 'John Doe' };
+      const result = { id: 1, firstName: 'n1', lastName: 'n2', isActive: true  };
 
       jest.spyOn(service, 'findOne').mockResolvedValue(result as never);
 
@@ -87,7 +89,7 @@ describe('UsersController', () => {
 
   describe('update', () => {
     it('should update a user when passed a valid ID and valid input', async () => {
-      const updateUserDto: UpdateUserDto = { name: 'Jane Doe' };
+      const updateUserDto: UpdateUserDto = { firstName: 'n2' };
       const result = { id: 1, ...updateUserDto };
 
       jest.spyOn(service, 'update').mockResolvedValue(result as never);
@@ -96,7 +98,7 @@ describe('UsersController', () => {
     });
 
     it('should throw an error if the user is not found', async () => {
-      const updateUserDto: UpdateUserDto = { name: 'Jane Doe' };
+      const updateUserDto: UpdateUserDto = { firstName: 'n2' };
 
       jest
         .spyOn(service, 'update')
@@ -108,7 +110,7 @@ describe('UsersController', () => {
     });
 
     it('should throw an error if the input is invalid', async () => {
-      const updateUserDto: UpdateUserDto = { name: '' };
+      const updateUserDto: UpdateUserDto = { firstName: '' };
 
       jest
         .spyOn(service, 'update')
@@ -122,7 +124,7 @@ describe('UsersController', () => {
 
   describe('remove', () => {
     it('should remove a user when passed a valid ID', async () => {
-      const result = { id: 1, name: 'John Doe' };
+      const result = { id: 1, firstName: 'n2' };
 
       jest.spyOn(service, 'remove').mockResolvedValue(result as never);
 
