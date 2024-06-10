@@ -53,7 +53,9 @@ describe('UsersController', () => {
 
   describe('findAll', () => {
     it('should return all users', async () => {
-      const result = [{ id: 1, firstName: 'n1', lastName: 'n2', isActive: true }];
+      const result = [
+        { id: 1, firstName: 'n1', lastName: 'n2', isActive: true },
+      ];
 
       jest.spyOn(service, 'findAll').mockResolvedValue(result as never);
 
@@ -71,7 +73,7 @@ describe('UsersController', () => {
 
   describe('findOne', () => {
     it('should return a user when passed a valid ID', async () => {
-      const result = { id: 1, firstName: 'n1', lastName: 'n2', isActive: true  };
+      const result = { id: 1, firstName: 'n1', lastName: 'n2', isActive: true };
 
       jest.spyOn(service, 'findOne').mockResolvedValue(result as never);
 
