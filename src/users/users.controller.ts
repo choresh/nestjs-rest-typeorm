@@ -61,7 +61,7 @@ export class UsersController {
   @Get('export')
   @Header('Content-Type', 'application/json')
   @Header('Content-Disposition', 'attachment; filename="users.json"')
-  async export() {
+  async exportAllUsers() {
     const data = await this.usersService.findAll();
     const dataStream = new Readable();
     dataStream.push(JSON.stringify(data));
@@ -89,7 +89,7 @@ export class UsersController {
 
   @Post('import')
   @UseInterceptors(FileInterceptor('file'))
-  async import(@UploadedFile() file: Express.Multer.File): Promise<User[]> {
+  async importManyUsers(@UploadedFile() file: Express.Multer.File): Promise<User[]> {
     const createUserDtos: CreateUserDto[] = JSON.parse(file.buffer?.toString());
     return await this.usersService.createMany(createUserDtos);
   }
