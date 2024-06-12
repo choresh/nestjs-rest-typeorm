@@ -28,7 +28,6 @@ export class UsersService {
     return await this.usersRepository.find();
   }
 
-  // ZZZ
   async findSome(filter: UsersFilter): Promise<User[]> {
     return await this.usersRepository.find({
       where: filter,
@@ -50,7 +49,6 @@ export class UsersService {
     return await this.usersRepository.delete(id);
   }
 
-  // ZZZ
   async createMany(createUserDtos: CreateUserDto[]): Promise<User[]> {
     const newEntities = createUserDtos.map((currCreateUserDto) =>
       this.usersRepository.create(currCreateUserDto),

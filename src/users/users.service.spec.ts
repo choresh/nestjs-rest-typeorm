@@ -168,7 +168,7 @@ describe('UsersService', () => {
       await service.createMany(createUserDtos);
 
       const filter: UsersFilter = {
-        lastName: 'Abc',
+        isActive: false
       };
       const users = await service.findSome(filter);
       expect(users).toHaveLength(0);

@@ -100,6 +100,53 @@ describe('UsersController', () => {
     });
   });
 
+  describe('findSome', () => {
+    it('should return some users', async () => {
+      const filePath = join(
+        __dirname,
+        '..',
+        '..',
+        'test',
+        'data',
+        'users.json',
+      );
+      await request(app.getHttpServer())
+        .post('/users/import')
+        .attach('file', filePath)
+        .expect(201);
+
+      const response = await request(app.getHttpServer())
+        .get('/users/some?firstName=f2&isActive=true')
+        .expect(200);
+
+      expect(response.body).toBeInstanceOf(Array);
+      expect(response.body).toHaveLength(1);
+      expect(response.body[0].firstName).toBe('f2');
+    });
+
+    it('should return an empty array if no users are found', async () => {
+      const filePath = join(
+        __dirname,
+        '..',
+        '..',
+        'test',
+        'data',
+        'users.json',
+      );
+      await request(app.getHttpServer())
+        .post('/users/import')
+        .attach('file', filePath)
+        .expect(201);
+
+      const response = await request(app.getHttpServer())
+        .get('/users/some?firstName=f2&isActive=false')
+        .expect(200);
+
+      expect(response.body).toBeInstanceOf(Array);
+      expect(response.body).toHaveLength(0);
+    });
+  });
+
   describe('findOneById', () => {
     it('should return a user when passed a valid ID', async () => {
       const createUserDto: CreateUserDto = {
@@ -216,11 +263,11 @@ describe('UsersController', () => {
         .attach('file', filePath)
         .expect(201);
 
-      const result = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/users/export')
         .expect(200);
-      expect(result.body[1].firstName).toBe('f2');
-      expect(result.headers['content-disposition']).toBe(
+      expect(response.body[1].firstName).toBe('f2');
+      expect(response.headers['content-disposition']).toBe(
         'attachment; filename="users.json"',
       );
     });
