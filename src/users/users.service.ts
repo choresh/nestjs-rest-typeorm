@@ -35,4 +35,9 @@ export class UsersService {
   async remove(id: number): Promise<DeleteResult> {
     return await this.usersRepository.delete(id);
   }
+
+  async createMany(createUserDtos: CreateUserDto[]): Promise<User[]> {
+    const newEntities = createUserDtos.map(currCreateUserDto => this.usersRepository.create(currCreateUserDto));
+    return await this.usersRepository.save(newEntities);
+  }
 }

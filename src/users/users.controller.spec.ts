@@ -23,7 +23,7 @@ describe('UsersController', () => {
           entities: [User],
           synchronize: true,
         }),
-        TypeOrmModule.forFeature([User])
+        TypeOrmModule.forFeature([User]),
       ],
       controllers: [UsersController],
       providers: [UsersService],
@@ -186,7 +186,14 @@ describe('UsersController', () => {
 
   describe('import', () => {
     it('should import users from external file', async () => {
-      const filePath = join(__dirname, '..', '..', 'test', 'data', 'users.json');
+      const filePath = join(
+        __dirname,
+        '..',
+        '..',
+        'test',
+        'data',
+        'users.json',
+      );
       await request(app.getHttpServer())
         .post('/users/import')
         .attach('file', filePath)
