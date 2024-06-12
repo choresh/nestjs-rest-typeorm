@@ -43,7 +43,7 @@ describe('UsersController', () => {
     await app.close();
   });
 
-  describe('create', () => {
+  describe('createOne', () => {
     it('should create a user when passed valid input', async () => {
       const createUserDto: CreateUserDto = {
         firstName: 'John',
@@ -100,7 +100,7 @@ describe('UsersController', () => {
     });
   });
 
-  describe('findOne', () => {
+  describe('findOneById', () => {
     it('should return a user when passed a valid ID', async () => {
       const createUserDto: CreateUserDto = {
         firstName: 'John',
@@ -124,7 +124,7 @@ describe('UsersController', () => {
     });
   });
 
-  describe('update', () => {
+  describe('updateOneById', () => {
     it('should update a user when passed a valid ID and valid input', async () => {
       const createUserDto: CreateUserDto = {
         firstName: 'John',
@@ -156,7 +156,7 @@ describe('UsersController', () => {
     });
   });
 
-  describe('remove', () => {
+  describe('removeOneById', () => {
     it('should remove a user when passed a valid ID', async () => {
       const createUserDto: CreateUserDto = {
         firstName: 'John',
@@ -198,6 +198,31 @@ describe('UsersController', () => {
         .post('/users/import')
         .attach('file', filePath)
         .expect(201);
+    });
+  });
+
+  describe('export', () => {
+    it('should export all users to external file', async () => {
+      const filePath = join(
+        __dirname,
+        '..',
+        '..',
+        'test',
+        'data',
+        'users.json',
+      );
+      await request(app.getHttpServer())
+        .post('/users/import')
+        .attach('file', filePath)
+        .expect(201);
+
+      const result = await request(app.getHttpServer())
+        .get('/users/export')
+        .expect(200);
+      expect(result.body[1].firstName).toBe('f2');
+      expect(result.headers['content-disposition']).toBe(
+        'attachment; filename="users.json"',
+      );
     });
   });
 });

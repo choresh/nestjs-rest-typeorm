@@ -21,7 +21,7 @@ describe('UsersService', () => {
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
-import { UsersService } from './users.service';
+import { UsersFilter, UsersService } from './users.service';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -53,13 +53,13 @@ describe('UsersService', () => {
     await repository.query(`DELETE FROM user`);
   });
 
-  describe('create', () => {
+  describe('createOne', () => {
     it('should create and return a user when passed valid input', async () => {
       const createUserDto: CreateUserDto = {
-        firstName: 'John Doe',
-        lastName: '',
+        firstName: 'John',
+        lastName: 'Doe',
       };
-      const user = await service.create(createUserDto);
+      const user = await service.createOne(createUserDto);
 
       expect(user).toHaveProperty('id');
       expect(user.firstName).toBe(createUserDto.firstName);
@@ -71,14 +71,60 @@ describe('UsersService', () => {
         lastName: '',
       };
 
-      await expect(service.create(createUserDto)).rejects.toThrow();
+      await expect(service.createOne(createUserDto)).rejects.toThrow();
+    });
+  });
+
+  describe('createMany', () => {
+    it('should create and return a user when passed valid input', async () => {
+      const createUserDtos: CreateUserDto[] = [
+        {
+          firstName: 'John',
+          lastName: 'Doe',
+        },
+        {
+          firstName: 'John',
+          lastName: 'Smit',
+        },
+      ];
+      const users = await service.createMany(createUserDtos);
+
+      expect(users[0].firstName).toBe(createUserDtos[0].firstName);
+      expect(users[1].lastName).toBe(createUserDtos[1].lastName);
+    });
+
+    it('should throw an error if the creation fails', async () => {
+      const createUserDtos: CreateUserDto[] = [
+        {
+          firstName: 'John',
+          lastName: 'Doe',
+        },
+        {
+          firstName: undefined,
+          lastName: 'Smit',
+        },
+      ];
+
+      await expect(service.createMany(createUserDtos)).rejects.toThrow();
     });
   });
 
   describe('findAll', () => {
     it('should return all users', async () => {
+      const createUserDtos: CreateUserDto[] = [
+        {
+          firstName: 'John',
+          lastName: 'Doe',
+        },
+        {
+          firstName: 'John',
+          lastName: 'Smit',
+        },
+      ];
+      await service.createMany(createUserDtos);
       const users = await service.findAll();
-      expect(users).toBeInstanceOf(Array);
+      expect(users[0].firstName).toBe(createUserDtos[0].firstName);
+      expect(users[1].lastName).toBe(createUserDtos[1].lastName);
     });
 
     it('should return an empty array if no users are found', async () => {
@@ -87,66 +133,108 @@ describe('UsersService', () => {
     });
   });
 
-  describe('findOne', () => {
+  describe('findSome', () => {
+    it('should return some users', async () => {
+      const createUserDtos: CreateUserDto[] = [
+        {
+          firstName: 'John',
+          lastName: 'Doe',
+        },
+        {
+          firstName: 'John',
+          lastName: 'Smit',
+        },
+      ];
+      await service.createMany(createUserDtos);
+
+      const filter: UsersFilter = {
+        lastName: 'Smit',
+      };
+      const users = await service.findSome(filter);
+      expect(users).toBeInstanceOf(Array);
+    });
+
+    it('should return an empty array if no users are found', async () => {
+      const createUserDtos: CreateUserDto[] = [
+        {
+          firstName: 'John',
+          lastName: 'Doe',
+        },
+        {
+          firstName: 'John',
+          lastName: 'Smit',
+        },
+      ];
+      await service.createMany(createUserDtos);
+
+      const filter: UsersFilter = {
+        lastName: 'Abc',
+      };
+      const users = await service.findSome(filter);
+      expect(users).toHaveLength(0);
+    });
+  });
+
+  describe('findOneById', () => {
     it('should return a user when passed a valid ID', async () => {
       const createUserDto: CreateUserDto = {
-        firstName: 'John Doe',
-        lastName: '',
+        firstName: 'John',
+        lastName: 'Doe',
       };
-      const user = await service.create(createUserDto);
-      const foundUser = await service.findOne(user.id);
+      const user = await service.createOne(createUserDto);
+      const foundUser = await service.findOneById(user.id);
 
       expect(foundUser).not.toBeNull();
       expect(foundUser).toHaveProperty('id', user.id);
     });
 
     it('should return null if the user is not found', async () => {
-      const user = await service.findOne(999);
+      const user = await service.findOneById(999);
       expect(user).toBeNull();
     });
   });
 
-  describe('update', () => {
+  describe('updateOneById', () => {
     it('should update a user when passed a valid ID and valid input', async () => {
       const createUserDto: CreateUserDto = {
-        firstName: 'John Doe',
-        lastName: '',
+        firstName: 'John',
+        lastName: 'Doe',
       };
-      const user = await service.create(createUserDto);
+      const user = await service.createOne(createUserDto);
       const updateUserDto: UpdateUserDto = { firstName: 'Jane Doe' };
 
-      const result = await service.update(user.id, updateUserDto);
+      const result = await service.updateOneById(user.id, updateUserDto);
       expect(result.affected).toBe(1);
 
-      const updatedUser = await service.findOne(user.id);
+      const updatedUser = await service.findOneById(user.id);
       expect(updatedUser.firstName).toBe(updateUserDto.firstName);
     });
 
     it('should return an error if the user is not found', async () => {
       const updateUserDto: UpdateUserDto = { firstName: 'Jane Doe' };
-      const result = await service.update(999, updateUserDto);
+      const result = await service.updateOneById(999, updateUserDto);
 
       expect(result.affected).toBe(0);
     });
   });
 
-  describe('remove', () => {
+  describe('removeOneById', () => {
     it('should remove a user when passed a valid ID', async () => {
       const createUserDto: CreateUserDto = {
-        firstName: 'John Doe',
-        lastName: '',
+        firstName: 'John',
+        lastName: 'Doe',
       };
-      const user = await service.create(createUserDto);
+      const user = await service.createOne(createUserDto);
 
-      const result = await service.remove(user.id);
+      const result = await service.removeOneById(user.id);
       expect(result.affected).toBe(1);
 
-      const removedUser = await service.findOne(user.id);
+      const removedUser = await service.findOneById(user.id);
       expect(removedUser).toBeNull();
     });
 
     it('should return an error if the user is not found', async () => {
-      const result = await service.remove(999);
+      const result = await service.removeOneById(999);
       expect(result.affected).toBe(0);
     });
   });

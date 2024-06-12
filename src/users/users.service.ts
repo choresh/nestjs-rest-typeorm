@@ -10,6 +10,8 @@ import {
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 
+export type UsersFilter = FindOptionsWhere<User>;
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -23,17 +25,18 @@ export class UsersService {
   }
 
   async findAll(): Promise<User[]> {
-    return this.usersRepository.find();
+    return await this.usersRepository.find();
   }
 
-  async findSome(where: FindOptionsWhere<User>): Promise<User[]> {
-    return this.usersRepository.find({
-      where,
+  // ZZZ
+  async findSome(filter: UsersFilter): Promise<User[]> {
+    return await this.usersRepository.find({
+      where: filter,
     });
   }
 
-  findOneById(id: number): Promise<User | null> {
-    return this.usersRepository.findOneBy({ id });
+  async findOneById(id: number): Promise<User | null> {
+    return await this.usersRepository.findOneBy({ id });
   }
 
   async updateOneById(
@@ -47,6 +50,7 @@ export class UsersService {
     return await this.usersRepository.delete(id);
   }
 
+  // ZZZ
   async createMany(createUserDtos: CreateUserDto[]): Promise<User[]> {
     const newEntities = createUserDtos.map((currCreateUserDto) =>
       this.usersRepository.create(currCreateUserDto),

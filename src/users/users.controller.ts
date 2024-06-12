@@ -12,12 +12,12 @@ import {
   StreamableFile,
   Query,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { UsersFilter, UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { User } from './entities/user.entity';
-import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
+import { DeleteResult, UpdateResult } from 'typeorm';
 import { Readable } from 'stream';
 
 function strToBoolean(str: string): boolean {
@@ -27,7 +27,7 @@ function strToBoolean(str: string): boolean {
   if (str === 'false') {
     return false;
   }
-  throw new Error(`Invalid value ('${str}' is not 'true' or 'false')`)
+  throw new Error(`Invalid value ('${str}' is not 'true' or 'false')`);
 }
 
 @Controller('users')
@@ -48,20 +48,20 @@ export class UsersController {
   async findSome(
     @Query('firstName') firstName: string,
     @Query('lastName') lastName: string,
-    @Query('isActive') isActive: string
+    @Query('isActive') isActive: string,
   ): Promise<User[]> {
-    const where: FindOptionsWhere<User> = {
+    const filter: UsersFilter = {
       firstName,
       lastName,
       isActive: strToBoolean(isActive),
     };
-    return await this.usersService.findSome(where);
+    return await this.usersService.findSome(filter);
   }
 
   @Get('export')
   @Header('Content-Type', 'application/json')
   @Header('Content-Disposition', 'attachment; filename="users.json"')
-  async exportAllUsers() {
+  async exportAllUsers(): Promise<StreamableFile> {
     const data = await this.usersService.findAll();
     const dataStream = new Readable();
     dataStream.push(JSON.stringify(data));
@@ -89,7 +89,9 @@ export class UsersController {
 
   @Post('import')
   @UseInterceptors(FileInterceptor('file'))
-  async importManyUsers(@UploadedFile() file: Express.Multer.File): Promise<User[]> {
+  async importManyUsers(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<User[]> {
     const createUserDtos: CreateUserDto[] = JSON.parse(file.buffer?.toString());
     return await this.usersService.createMany(createUserDtos);
   }
