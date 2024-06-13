@@ -131,6 +131,8 @@ describe('UsersService', () => {
       };
       const users = await service.findSome(filter);
       expect(users).toBeInstanceOf(Array);
+      expect(users).toHaveLength(1);
+      expect(users[0].lastName).toBe(filter.lastName);
     });
 
     it('should return an empty array if no users are found', async () => {

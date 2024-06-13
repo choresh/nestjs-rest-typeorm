@@ -88,6 +88,8 @@ describe('UsersController', () => {
 
       expect(response.body).toBeInstanceOf(Array);
       expect(response.body).toHaveLength(1);
+      expect(response.body[0].firstName).toBe(createUserDto.firstName);
+      expect(response.body[0].lastName).toBe(createUserDto.lastName);
     });
 
     it('should return an empty array if no users are found', async () => {
@@ -122,6 +124,7 @@ describe('UsersController', () => {
       expect(response.body).toBeInstanceOf(Array);
       expect(response.body).toHaveLength(1);
       expect(response.body[0].firstName).toBe('f2');
+      expect(response.body[0].lastName).toBe('l2');
     });
 
     it('should return an empty array if no users are found', async () => {
