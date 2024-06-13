@@ -188,7 +188,7 @@ describe('UsersService', () => {
       expect(foundUser).toHaveProperty('id', user.id);
     });
 
-    it('should return null if the user is not found', async () => {
+    it('should not throw an error if the user is not found', async () => {
       const user = await service.findOneById(999);
       expect(user).toBeNull();
     });
@@ -210,7 +210,7 @@ describe('UsersService', () => {
       expect(updatedUser.firstName).toBe(updateUserDto.firstName);
     });
 
-    it('should return an error if the user is not found', async () => {
+    it('should not throw an error if the user is not found', async () => {
       const updateUserDto: UpdateUserDto = { firstName: 'Jane Doe' };
       const result = await service.updateOneById(999, updateUserDto);
 
@@ -233,7 +233,7 @@ describe('UsersService', () => {
       expect(removedUser).toBeNull();
     });
 
-    it('should return an error if the user is not found', async () => {
+    it('should not throw an error if the user is not found', async () => {
       const result = await service.removeOneById(999);
       expect(result.affected).toBe(0);
     });
