@@ -1,24 +1,3 @@
-/*
-import { Test, TestingModule } from '@nestjs/testing';
-import { UsersService } from './users.service';
-
-describe('UsersService', () => {
-  let service: UsersService;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [UsersService],
-    }).compile();
-
-    service = module.get<UsersService>(UsersService);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-});
-*/
-
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
 import { UsersFilter, UsersService } from './users.service';
@@ -61,7 +40,7 @@ describe('UsersService', () => {
       };
       const user = await service.createOne(createUserDto);
 
-      expect(user).toHaveProperty('id');
+      expect(user.id).toBeDefined();
       expect(user.firstName).toBe(createUserDto.firstName);
     });
 
@@ -185,7 +164,7 @@ describe('UsersService', () => {
       const foundUser = await service.findOneById(user.id);
 
       expect(foundUser).not.toBeNull();
-      expect(foundUser).toHaveProperty('id', user.id);
+      expect(foundUser.id).toBe(user.id);
     });
 
     it('should not throw an error if the user is not found', async () => {
@@ -201,7 +180,7 @@ describe('UsersService', () => {
         lastName: 'Doe',
       };
       const user = await service.createOne(createUserDto);
-      const updateUserDto: UpdateUserDto = { firstName: 'Jane Doe' };
+      const updateUserDto: UpdateUserDto = { firstName: 'Jane' };
 
       const result = await service.updateOneById(user.id, updateUserDto);
       expect(result.affected).toBe(1);
@@ -211,7 +190,7 @@ describe('UsersService', () => {
     });
 
     it('should not throw an error if the user is not found', async () => {
-      const updateUserDto: UpdateUserDto = { firstName: 'Jane Doe' };
+      const updateUserDto: UpdateUserDto = { firstName: 'Jane' };
       const result = await service.updateOneById(999, updateUserDto);
 
       expect(result.affected).toBe(0);

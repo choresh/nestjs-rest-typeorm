@@ -55,7 +55,7 @@ describe('UsersController', () => {
         .send(createUserDto)
         .expect(201);
 
-      expect(response.body).toHaveProperty('id');
+      expect(response.body.id).toBeDefined();
       expect(response.body.firstName).toBe(createUserDto.firstName);
     });
 
@@ -76,11 +76,11 @@ describe('UsersController', () => {
 
   describe('findAll', () => {
     it('should return all users', async () => {
-      const user: CreateUserDto = {
+      const createUserDto: CreateUserDto = {
         firstName: 'John',
         lastName: 'Doe',
       };
-      await repository.save(user);
+      await repository.save(createUserDto);
 
       const response = await request(app.getHttpServer())
         .get('/users')
@@ -159,7 +159,7 @@ describe('UsersController', () => {
         .get(`/users/${user.id}`)
         .expect(200);
 
-      expect(response.body).toHaveProperty('id', user.id);
+      expect(response.body.id).toBe(user.id);
     });
 
     it('should not throw an error if the user is not found', async () => {
@@ -185,21 +185,21 @@ describe('UsersController', () => {
         .send(updateUserDto)
         .expect(200);
 
-      expect(response.body).toHaveProperty('affected', 1);
+      expect(response.body.affected).toBe(1);
 
       const updatedUser = await repository.findOneBy({ id: user.id });
       expect(updatedUser.firstName).toBe(updateUserDto.firstName);
     });
 
     it('should not throw an error if the user is not found', async () => {
-      const updateUserDto: UpdateUserDto = { firstName: 'Jane Doe' };
+      const updateUserDto: UpdateUserDto = { firstName: 'Jane' };
 
       const response = await request(app.getHttpServer())
         .patch('/users/999')
         .send(updateUserDto)
         .expect(200);
 
-      expect(response.body).toHaveProperty('affected', 0);
+      expect(response.body.affected).toBe(0);
     });
   });
 
@@ -216,7 +216,7 @@ describe('UsersController', () => {
         .delete(`/users/${user.id}`)
         .expect(200);
 
-      expect(response.body).toHaveProperty('affected', 1);
+      expect(response.body.affected).toBe(1);
 
       const removedUser = await repository.findOneBy({ id: user.id });
       expect(removedUser).toBeNull();
@@ -227,7 +227,7 @@ describe('UsersController', () => {
         .delete('/users/999')
         .expect(200);
 
-      expect(response.body).toHaveProperty('affected', 0);
+      expect(response.body.affected).toBe(0);
     });
   });
 
